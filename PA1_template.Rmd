@@ -1,25 +1,57 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-
+# Reproducible Research: Peer Assessment 1
 
 ## Loading and preprocessing the data
-
-
+```{r loaddata}
+unzip your file "activity.zip"
+Load the file, read the data using read.csv()
+activity <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
-
-
+```{r}
+total <- aggregate(steps ~ date, activity, sum, na.rm=TRUE)
+mean(total, na.rm=TRUE)
+median(total, na.rm=TRUE)
+```
 
 ## What is the average daily activity pattern?
+```{r}
+intervalTotal <- aggregate(steps ~ interval, activity, mean, na.rm=TRUE)
+plot(intervalTotal$interval,intervalTotal$steps,type="l", xlab="Interval", ylab= "steps", main = "Steps by Interval")
+```
+What is the maximum number of steps by interval
+```{r}
 
+intervalTotal[which.max(intervalTotal$steps),]
+```
 
 
 ## Imputing missing values
+```{r}
+missingValues <- is.na(activity$steps)
+table(missingValues)
+```
+Replacing NA setp values with mean values
+```{r}
+library(Hmisc)
 
+completeActivity <- activity
+completeActivity$steps <- impute(completeActivity$steps,fun=mean)
+totalimputed <- aggregate(steps ~ interval, completeActivity, sum)
+plot(totalimputed$interval,totalimputed$steps,type="h", xlab="Interval", ylab= "steps", main = "Imputed Steps by Interval")
 
+mean(totalimputed$steps)
+median(totalimputed$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+library(ggplot2)
+
+completeActivity$dayType <-  ifelse(as.POSIXlt(completeActivity$date)$wday %in% c(0,6), 'weekend', 'weekday')
+
+totalDayType <- aggregate(steps ~ interval+dayType, completeActivity, mean)
+
+ggplot(totalDayType, aes(interval, steps)) + geom_line() + facet_grid(dayType ~ .) +
+  xlab("5-minute interval") + ylab("Number of steps")
+```
